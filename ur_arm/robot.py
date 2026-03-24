@@ -9,8 +9,8 @@ class Robot:
         self,
         robot_ip: str,
         grip_port: int = 63352,
-        move_speed: float = 0.5,
-        move_accel: float = 0.3,
+        move_speed: float = 0.1,
+        move_accel: float = 0.5,
         grip_speed: int = 255,
         grip_force: int = 50,
     ):

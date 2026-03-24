@@ -92,6 +92,9 @@ class Camera:
             return center_x, center_y, block_x, block_y, angle
 
         return None
+    
+    def get_cam_res(self):
+        return self.cap.get(cv2.CAP_PROP_FRAME_WIDTH), self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
 
     def release(self):
         self.cap.release()

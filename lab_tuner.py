@@ -22,13 +22,14 @@ cv2.createTrackbar("B Min", "Trackbars", 0, 255, nothing)
 cv2.createTrackbar("B Max", "Trackbars", 255, 255, nothing)
 
 # Open the laptop camera (0 is usually the default built-in camera)
-cap = cv2.VideoCapture(1)
+cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
 
 print("--- INSTRUCTIONS ---")
 print("1. Adjust the sliders until ONLY your block is visible in the 'Result' window.")
 print("2. Press 'c' on your keyboard to print the values so you can copy them.")
 print("3. Press 'q' to quit.")
 
+print("Camera Resolution:", cap.get(cv2.CAP_PROP_FRAME_WIDTH), "x", cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 while True:
     ret, frame = cap.read()
     if not ret:
