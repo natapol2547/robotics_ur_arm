@@ -40,7 +40,7 @@ def main():
                 print(f"Computed offsets: off_x={off_x}, off_y={off_y}, off_roll={off_roll}")
 
                 
-                robot.move_offset([off_x, off_y, 0])
+                robot.move_offset([off_x, off_y, 0], blocking=False)
                 cv2.waitKey(10)  # Small delay to allow for graceful exit with 'q' key
 
             else:
