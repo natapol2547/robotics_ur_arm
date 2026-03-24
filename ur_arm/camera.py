@@ -4,7 +4,7 @@ import numpy as np
 
 class Camera:
     def __init__(self, camera_id: int = 0, debug: bool = False):
-        self.cap = cv2.VideoCapture(camera_id)
+        self.cap = cv2.VideoCapture(camera_id, cv2.CAP_DSHOW)
         self.debug = debug
 
     def get_frame(self):
