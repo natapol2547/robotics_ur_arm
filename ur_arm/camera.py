@@ -3,8 +3,9 @@ import numpy as np
 
 
 class Camera:
-    def __init__(self, camera_id: int = 0):
+    def __init__(self, camera_id: int = 0, debug: bool = False):
         self.cap = cv2.VideoCapture(camera_id)
+        self.debug = debug
 
     def get_frame(self):
         ret, frame = self.cap.read()
@@ -65,6 +66,28 @@ class Camera:
             # Get the 4 corners of our rotated box so we can draw it
             box = cv2.boxPoints(rect)
             box = np.int32(box)
+
+            if self.debug:
+
+                # Get the 4 corners of our rotated box so we can draw it
+                box = cv2.boxPoints(rect)
+                box = np.int32(box)
+
+                # Draw the green outline around the block
+                cv2.drawContours(frame, [box], 0, (0, 255, 0), 2)
+
+                # Draw a tiny red dot exactly in the middle
+                cv2.circle(frame, (center_x, center_y), 5, (0, 0, 255), -1)
+
+                # Create text showing the block dimensions and tilt angle
+                text = f"X:{block_x} Y:{block_y} | Angle:{int(angle)}"
+
+                # Put the text on the video feed next to the block
+                cv2.putText(frame, text, (center_x - 80, center_y - 20),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
+
+                # Show the final video feeds
+                cv2.imshow("Block Detector Tracker", frame)
 
             return center_x, center_y, block_x, block_y, angle
 
