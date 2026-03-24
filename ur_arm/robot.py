@@ -40,7 +40,7 @@ class Robot:
         command should interrupt the current one.
         """
         padded = list(pose) + [0.0] * (6 - len(pose))
-        self.rtde_c.moveL(padded[:6], self.move_speed, self.move_accel, 0, not blocking)
+        self.rtde_c.moveL(padded[:6], self.move_speed, self.move_accel)
 
     def move_offset(self, offset: list[float], blocking: bool = True) -> None:
         """Move by a Cartesian offset relative to the current TCP pose.
@@ -51,7 +51,7 @@ class Robot:
         """
         current = self.rtde_r.getActualTCPPose()
         target = [c + (offset[i] if i < len(offset) else 0.0) for i, c in enumerate(current)]
-        self.rtde_c.moveL(target, self.move_speed, self.move_accel, 0, not blocking)
+        self.rtde_c.moveL(target, self.move_speed, self.move_accel)
 
     # ------------------------------------------------------------------
     # Gripper — RobotiqGripper
