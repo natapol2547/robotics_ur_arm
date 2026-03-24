@@ -1,156 +1,102 @@
-import socket
-import time
+import rtde_control
+import rtde_receive
+
+from .robotiq_gripper import RobotiqGripper
 
 
 class Robot:
     def __init__(
         self,
-        pose_host: str,
-        pose_port: int,
-        move_host: str,
-        move_port: int,
-        grip_host: str,
-        grip_port: int,
-        move_accel: float = 2.0,
-        move_vel: float = 10.0,
-        pose_calibration: tuple[float, float] = (0.0, 0.0),
+        robot_ip: str,
+        grip_port: int = 63352,
+        move_speed: float = 0.5,
+        move_accel: float = 0.3,
+        grip_speed: int = 255,
+        grip_force: int = 50,
     ):
+        self.move_speed = move_speed
         self.move_accel = move_accel
-        self.move_vel = move_vel
-        self.pose_calibration = pose_calibration
+        self.grip_speed = grip_speed
+        self.grip_force = grip_force
 
-        self.pose_tcp = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.pose_tcp.connect((pose_host, pose_port))
+        self.rtde_r = rtde_receive.RTDEReceiveInterface(robot_ip)
+        self.rtde_c = rtde_control.RTDEControlInterface(robot_ip)
 
-        self.move_tcp = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.move_tcp.connect((move_host, move_port))
-
-        self.grip_tcp = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.grip_tcp.connect((grip_host, grip_port))
+        self.gripper = RobotiqGripper()
+        self.gripper.connect(robot_ip, grip_port)
 
     # ------------------------------------------------------------------
-    # Pose
+    # Robot arm — RTDE
     # ------------------------------------------------------------------
 
-    def get_pose(self) -> list[float] | None:
-        """Read one pose frame from the streaming pose server.
+    def get_tcp_pose(self) -> list[float]:
+        """Return the current TCP pose ``[x, y, z, rx, ry, rz]`` via RTDE."""
+        return self.rtde_r.getActualTCPPose()
 
-        The server continuously pushes frames in the format ``#x,y#\\n``
-        where x and y are values in millimetres.  Returns a calibrated
-        ``[x, y]`` list in metres, or ``None`` when the frame is invalid
-        (e.g. the server sends ``#,#\\n`` to signal *no target*).
-        """
-        raw = self.pose_tcp.recv(1024).decode().strip()
-        if raw == "#,#":
-            return None
-        try:
-            values = list(
-                map(lambda v: round(float(v), 2) / 1000, raw.replace("#", "").split(","))
-            )
-            values[0] -= self.pose_calibration[0]
-            values[1] -= self.pose_calibration[1]
-            return values
-        except Exception:
-            return None
+    def move(self, pose: list[float], blocking: bool = True) -> None:
+        """Move to an absolute TCP pose ``[x, y, z, rx, ry, rz]`` using moveL.
 
-    # ------------------------------------------------------------------
-    # Movement
-    # ------------------------------------------------------------------
-
-    def move(self, pose: list[float]) -> None:
-        """Send a *relative* move command to the robot arm using URScript.
-
-        ``pose`` is a list of up to 6 floats ``[dx, dy, dz, rx, ry, rz]``
-        (missing elements default to 0).  The command is executed as
-        ``movej`` relative to the current TCP pose.
+        Set ``blocking=False`` for continuous tracking loops where the next
+        command should interrupt the current one.
         """
         padded = list(pose) + [0.0] * (6 - len(pose))
-        dx, dy, dz, rx, ry, rz = padded[:6]
-        cmd = (
-            f"movej(pose_add(get_actual_tcp_pose(),"
-            f"p[{dx},{dy},{dz},{rx},{ry},{rz}]),"
-            f"{self.move_accel},{self.move_vel},0,0)\n"
-        )
-        self.move_tcp.send(cmd.encode("utf-8"))
+        self.rtde_c.moveL(padded[:6], self.move_speed, self.move_accel, 0, not blocking)
 
-    def move_to(self, pose: list[float]) -> None:
-        """Send an *absolute* move command using URScript ``movej``.
+    def move_offset(self, offset: list[float], blocking: bool = True) -> None:
+        """Move by a Cartesian offset relative to the current TCP pose.
 
-        ``pose`` must be a 6-element list ``[x, y, z, rx, ry, rz]`` in
-        the robot's base frame (metres / radians).
+        ``offset`` is ``[dx, dy, dz]`` (or up to 6 elements); missing
+        elements default to 0.  Rotation components of the current pose
+        are preserved.
         """
-        padded = list(pose) + [0.0] * (6 - len(pose))
-        x, y, z, rx, ry, rz = padded[:6]
-        cmd = (
-            f"movej(p[{x},{y},{z},{rx},{ry},{rz}],"
-            f"{self.move_accel},{self.move_vel},0,0)\n"
-        )
-        self.move_tcp.send(cmd.encode("utf-8"))
+        current = self.rtde_r.getActualTCPPose()
+        target = [c + (offset[i] if i < len(offset) else 0.0) for i, c in enumerate(current)]
+        self.rtde_c.moveL(target, self.move_speed, self.move_accel, 0, not blocking)
 
     # ------------------------------------------------------------------
-    # Gripper
+    # Gripper — RobotiqGripper
     # ------------------------------------------------------------------
 
-    def activate_gripper(self, force: int = 1) -> bool:
-        """Initialise the gripper and open it fully.
-
-        Sends ``GET ACT`` to check activation state, sets the force, and
-        opens the fingers to position 0.  Returns ``True`` if the gripper
-        was already activated before this call.
-        """
-        self.grip_tcp.send(b"GET ACT\n")
-        response = str(self.grip_tcp.recv(10), "UTF-8")
-        already_active = "1" in response
-        self.grip_tcp.send(f"SET FOR {force}\n".encode())
-        self.grip_tcp.send(b"SET POS 0\n")
-        return already_active
+    def activate_gripper(self) -> None:
+        """Activate and auto-calibrate the gripper (blocks until ready)."""
+        self.gripper.activate()
 
     def grip(self, pos: int) -> None:
-        """Set the gripper finger position.
-
-        ``pos`` ranges from **0** (fully open) to **255** (fully closed).
-        """
-        pos = max(0, min(255, int(pos)))
-        self.grip_tcp.send(f"SET POS {pos}\n".encode())
+        """Move gripper to ``pos`` (0 = open, 255 = closed) and wait."""
+        self.gripper.move_and_wait_for_pos(pos, self.grip_speed, self.grip_force)
 
     def open_gripper(self) -> None:
-        """Fully open the gripper (position 0)."""
-        self.grip(0)
+        """Fully open the gripper and wait."""
+        self.grip(self.gripper.get_open_position())
 
     def close_gripper(self) -> None:
-        """Fully close the gripper (position 255)."""
-        self.grip(255)
+        """Fully close the gripper and wait."""
+        self.grip(self.gripper.get_closed_position())
 
     # ------------------------------------------------------------------
     # Grab sequence
     # ------------------------------------------------------------------
 
-    def grab(self, grab_depth: float = -0.135, settle_time: float = 3.0) -> None:
-        """Perform a full pick sequence at the current XY position.
+    def grab(self, grab_depth: float = -0.135) -> None:
+        """Perform a full pick at the current XY position.
 
-        1. Descend by ``grab_depth`` (negative = downward).
-        2. Wait ``settle_time`` seconds for the arm to reach the target.
-        3. Close the gripper.
-        4. Wait 1 second for the gripper to close.
-        5. Retract back up by ``-grab_depth``.
+        1. Descend by ``grab_depth`` (negative = down).
+        2. Close the gripper (blocking — waits until gripped).
+        3. Retract back up.
         """
-        self.move([0, 0, grab_depth])
-        time.sleep(settle_time)
+        self.move_offset([0, 0, grab_depth])
         self.close_gripper()
-        time.sleep(1.0)
-        self.move([0, 0, -grab_depth])
+        self.move_offset([0, 0, -grab_depth])
 
     # ------------------------------------------------------------------
     # Lifecycle
     # ------------------------------------------------------------------
 
     def close(self) -> None:
-        """Close all socket connections."""
-        for sock in (self.pose_tcp, self.move_tcp, self.grip_tcp):
-            try:
-                sock.close()
-            except OSError:
-                pass
+        """Disconnect from the robot arm and gripper."""
+        self.rtde_c.disconnect()
+        self.rtde_r.disconnect()
+        self.gripper.disconnect()
 
     def __enter__(self) -> "Robot":
         return self

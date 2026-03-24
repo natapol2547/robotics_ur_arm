@@ -19,7 +19,7 @@ print(f"Current Pose: {current_pose}")
 # 3. Move Linearly (moveL)
 # Let's create a target by copying the current pose and moving up 10cm (0.1m) in the Z-axis
 target_pose = current_pose.copy()
-target_pose[2] -= 0.10
+target_pose[2] += 0.10
 
 # Define speed (m/s) and acceleration (m/s^2)
 speed = 0.5
