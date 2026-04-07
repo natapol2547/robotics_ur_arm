@@ -53,6 +53,24 @@ class Robot:
         target = [c + (offset[i] if i < len(offset) else 0.0) for i, c in enumerate(current)]
         self.rtde_c.moveL(target, self.move_speed, self.move_accel, not blocking)
 
+
+    def set_speed(self, speed: list[float]) -> None:
+        """Set the speed of the robot arm in Cartesian space.
+
+        ``speed`` is ``[vx, vy, vz, vrx, vry, vrz]`` in m/s and rad/s; missing
+        elements default to 0.
+        """
+        padded = list(speed) + [0.0] * (6 - len(speed))
+        self.rtde_c.speedL(padded[:6], self.move_accel)
+
+    
+    def get_inverse_kinematics(self, pose: list[float]) -> list[float]:
+        return float(list(self.rtde_c.get_inverse_kin(pose)))
+    
+    def pose_to_servoj(self, pose: list[float], blocking: bool = True) -> None:
+        joint_positions = self.get_inverse_kinematics(pose)
+        self.rtde_c.servoJ(joint_positions, self.move_accel, self.move_speed , 0.008, 0.1, 300)
+
     # ------------------------------------------------------------------
     # Gripper — RobotiqGripper
     # ------------------------------------------------------------------
@@ -102,4 +120,5 @@ class Robot:
         return self
 
     def __exit__(self, *_) -> None:
+        self.rtde_c.stopL(0.5)
         self.close()
