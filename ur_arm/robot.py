@@ -64,12 +64,6 @@ class Robot:
         self.rtde_c.speedL(padded[:6], self.move_accel)
 
     
-    def get_inverse_kinematics(self, pose: list[float]) -> list[float]:
-        return float(list(self.rtde_c.get_inverse_kin(pose)))
-    
-    def pose_to_servoj(self, pose: list[float], blocking: bool = True) -> None:
-        joint_positions = self.get_inverse_kinematics(pose)
-        self.rtde_c.servoJ(joint_positions, self.move_accel, self.move_speed , 0.008, 0.1, 300)
 
     # ------------------------------------------------------------------
     # Gripper — RobotiqGripper
