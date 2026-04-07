@@ -425,6 +425,18 @@ wheels = [
 ]
 
 [[package]]
+name = "pypylon"
+version = "26.2.1"
+source = { registry = "https://pypi.org/simple" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/8f/fe/017b52b913fa76cef13489b46aa3c2b177c4e161f805a66529b7194eb74b/pypylon-26.2.1-cp39-abi3-macosx_14_0_arm64.whl", hash = "sha256:05ae50cd8c0155563a9d9e5bffc0ca7caaf4192722ceabb660d917c70ecf197c", size = 30249626, upload-time = "2026-03-04T14:14:22.499Z" },
+    { url = "https://files.pythonhosted.org/packages/d4/f9/c52b00adbdf1b2b7ce29cb2571acce0d529200e236ac358e712cdf699bed/pypylon-26.2.1-cp39-abi3-macosx_14_0_x86_64.whl", hash = "sha256:dead385424eb865347eee45a814ba9386cf88635d2ef4fd72d1616ddab37d0bf", size = 30302567, upload-time = "2026-03-04T14:14:25.528Z" },
+    { url = "https://files.pythonhosted.org/packages/21/6e/50517425f474671bb89c3d8568ab1fa57a268e7e04f158c8d7123e9c0975/pypylon-26.2.1-cp39-abi3-manylinux_2_31_aarch64.whl", hash = "sha256:84e35d8ec081e6dab6716d7a1d6630dd41dc79301035c994046b1f5714a65b9d", size = 68634742, upload-time = "2026-03-04T14:14:37.217Z" },
+    { url = "https://files.pythonhosted.org/packages/8d/fc/e4b499c3c2f4230f8f3811bd5dce2e0fadd17a236d3139e823a7acf3a1b0/pypylon-26.2.1-cp39-abi3-manylinux_2_31_x86_64.whl", hash = "sha256:e53f2a96bd020560c7a58686c1c8bca7cb60ea63ab68933ce103701b07213b67", size = 85718319, upload-time = "2026-03-04T14:14:08.442Z" },
+    { url = "https://files.pythonhosted.org/packages/17/69/57e7fa0a2ac57bd7d488b1d173b25fb49523914baa5e8da89d5cfd7c3486/pypylon-26.2.1-cp39-abi3-win_amd64.whl", hash = "sha256:02bd81a13206e667cd3cf7e36dde130987006498da8da9960d14b3148f311d7b", size = 105329743, upload-time = "2026-03-04T14:14:46.446Z" },
+]
+
+[[package]]
 name = "python-dateutil"
 version = "2.9.0.post0"
 source = { registry = "https://pypi.org/simple" }
@@ -444,6 +456,7 @@ dependencies = [
     { name = "matplotlib" },
     { name = "numpy" },
     { name = "opencv-python" },
+    { name = "pypylon" },
     { name = "ur-rtde" },
 ]
 
@@ -452,6 +465,7 @@ requires-dist = [
     { name = "matplotlib", specifier = ">=3.10.8" },
     { name = "numpy", specifier = ">=2.4.3" },
     { name = "opencv-python", specifier = ">=4.13.0.92" },
+    { name = "pypylon", specifier = ">=26.2.1" },
     { name = "ur-rtde", specifier = ">=1.6.3" },
 ]
 
