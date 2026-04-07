@@ -9,69 +9,61 @@
 #########################################################
 
 
+import socket, time
+from config import *
 
 
-import socket,time
-from socket import *
+def connect():
+    # Connect to conveyor belt
+    global conv
+    c = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    c.bind((ip_host, port_conv))
+    c.listen(1)
+    print("socket is listening")
 
-
-host    = '10.10.0.22'
-port_conv = 2002
-
-c = socket(AF_INET, SOCK_STREAM)
-#c.bind(('10.10.0.98', 2002))
-
-
-
-#c = socket.socket()
-
-#with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as c:
-c.connect((host , port_conv))
-print ("socket binded to %s" %(port_conv)) 
-
-c.listen(1)
-print ("socket is listening") 
-conv, addr = c.accept()
-with conv:
+    conv, addr = c.accept()
+    c.close()  # Close server socket after accepting connection
     print(f"Connected by {addr}")
     conv.sendall(b'activate,tcp,0.0\n')
     time.sleep(1)
 
+    return conv
+
+
+def start():
+    # Start conveyor belt
+    # conv.sendall(b'pwr_on,conv,0\n')
+    # time.sleep(1)
+
+    conv.sendall(b'activate,tcp,0.0\n')
+    time.sleep(1)
+
     conv.sendall(b'pwr_on,conv,0\n')
+    response = conv.recv(1024)
+    print("Server response:", response.decode())
     time.sleep(1)
 
-    conv.sendall(b'set_vel,conv,20\n')
-    time.sleep(1)
+    conv.sendall(b'set_vel,conv,5\n')
+    time.sleep(2)
+    # response = conv.recv(1024)
+    # print("Server response:", response.decode())
 
+    conv.sendall(b'jog_fwd,conv,0\n')
+    response = conv.recv(1024)
+    print("Server response:", response.decode())
+    time.sleep(5)
+
+
+def stop():
+    # Stop conveyor belt
     conv.sendall(b'jog_stop,conv,0\n')
     time.sleep(1)
 
-    conv_recv = conv.recv(100)
-    print(conv_recv)
-  
+def main():
+    connect()
+    start()
+    # time.sleep(10)  # Let the conveyor run for 5 seconds
+    stop()
 
-"""
-# print ('0000000000000000')
-# cmd = input('cmd to conv:\n')
-# print(f'You entered {cmd}')
-cmd = "activate,tcp,0.0\n"
-c.send(b'activate,tcp,0.0\n')
-#c.sendall(cmd.encode())
-#conv.sendall(cmd.encode())
-time.sleep(1)
-
-conv.sendall(b'pwr_on,conv,0\n')
-# time.sleep(1)
-
-# conv.sendall(b'set_vel,conv,10\n')
-# time.sleep(1)
-
-# conv.sendall(b'jog_fwd,conv,0\n')
-# time.sleep(1)
-
-conv_recv = conv.recv(10)
-print (conv_recv)
-"""
-   
-
-
+if __name__ == "__main__":
+    main()

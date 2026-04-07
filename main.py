@@ -6,9 +6,9 @@ import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 import threading
 
-ROBOT_IP = "10.10.0.104"
-LOWER_LAB = np.array([48, 137, 101])
-UPPER_LAB = np.array([204, 180, 183])
+ROBOT_IP = "10.10.0.8"
+LOWER_LAB = np.array([137, 136, 112])
+UPPER_LAB = np.array([234, 176, 149])
 
 def main():
     with Robot(robot_ip=ROBOT_IP, grip_force=50) as robot:
@@ -25,14 +25,14 @@ def main():
         cam_center_x = cam_width / 2
         cam_center_y = cam_height / 2
 
-        offset_mag = 150
+        offset_mag = 100
         
         TIME_STEP = 0.01
 
         while True:
             _, _, z, _, _, _ = robot.get_tcp_pose()
 
-            if z < 0.28:
+            if z < 0.14:
                 break
 
             # print("Current Z height: ", z)
@@ -57,7 +57,7 @@ def main():
                 # robot.move_offset([off_x, off_y, -0.075], blocking=False)
 
                 # Limit speed
-                speed = [off_x, off_y, -0.05]
+                speed = [off_x, 0, -0.025]
                 speed = [max(-0.15, min(0.15, v)) for v in speed]
                 # Test speed
                 robot.set_speed(speed)
@@ -81,7 +81,7 @@ def main():
         # robot.move_offset([0, 0, 0], blocking=False)
         robot.rtde_c.speedStop()
         robot.close_gripper()
-        robot.move_offset([0, 0, 0.3], blocking=True)  # Move up after gripping
+        robot.move_offset([0, 0, 0.2], blocking=True)  # Move up after gripping
 
 if __name__ == "__main__":
     main()
