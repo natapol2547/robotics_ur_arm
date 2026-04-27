@@ -25,7 +25,7 @@ def main():
         robot.move([0.162, -0.318, 0.243, 2.276, 2.172, 0], blocking=True)  #move above conveyor belt
 
         SAMPLING_RATE = 0.01
-        pid_x = pid.PID(0.0003, 0.0, 0)
+        pid_x = pid.PID(0.0003, 0.0, 0.0)
         pid_y = pid.PID(0.0003, 0.0, 0.0)
 
         cam = Camera(debug=True)
@@ -45,7 +45,7 @@ def main():
                 block = cam.get_block_pos(LOWER_LAB, UPPER_LAB, 5000)
 
                 if block is not None:
-                    pos_x, pos_y, width, height, angle = block
+                    pos_x, pos_y, _, _, _= block
 
                     cam_center_x = cam_width / 2
                     cam_center_y = cam_height / 2
